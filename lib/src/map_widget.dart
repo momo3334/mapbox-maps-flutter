@@ -1,5 +1,7 @@
 part of mapbox_maps_flutter;
 
+typedef OnMapboxControllerCreatedCallback = void Function(MapboxMap);
+
 final _SuffixesRegistry _suffixesRegistry = _SuffixesRegistry._instance();
 
 /// A mode for platform MapView to be hosted in Flutter on Android platform.
@@ -69,9 +71,18 @@ class MapWidget extends StatefulWidget {
     this.onTapListener,
     this.onLongTapListener,
     this.onScrollListener,
+    this.withNavigation = false,
+    this.onMapboxControllerCreated,
+    int? suffix,
   }) : super(key: key) {
     LogConfiguration._setupDebugLoggingIfNeeded();
+    _mapWidgetState = _MapWidgetState(
+      suffix ?? _suffixesRegistry.getSuffix(),
+    );
+    _shouldReleaseSuffix = (suffix == null);
   }
+
+  late final bool _shouldReleaseSuffix;
 
   /// Describes the map options value when using a MapWidget.
   final MapOptions? mapOptions;
@@ -155,7 +166,11 @@ class MapWidget extends StatefulWidget {
   /// were not claimed by any other gesture recognizer.
   final Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers;
 
-  final _mapWidgetState = _MapWidgetState();
+  final OnMapboxControllerCreatedCallback? onMapboxControllerCreated;
+
+  final bool withNavigation;
+
+  late final _mapWidgetState;
 
   final OnMapTapListener? onTapListener;
   final OnMapLongTapListener? onLongTapListener;
@@ -171,11 +186,13 @@ class MapWidget extends StatefulWidget {
 
 class _MapWidgetState extends State<MapWidget> {
   late final _MapboxMapsPlatform _mapboxMapsPlatform =
-      _MapboxMapsPlatform.instance(_suffix);
-  final int _suffix = _suffixesRegistry.getSuffix();
+      _MapboxMapsPlatform.instance(suffix);
+  final int suffix;
   late final _MapEvents _events;
   bool _platformViewCreated = false;
   MapboxMap? mapboxMap;
+
+  _MapWidgetState(this.suffix);
 
   @override
   Widget build(BuildContext context) {
@@ -189,8 +206,13 @@ class _MapWidgetState extends State<MapWidget> {
       'eventTypes': _events.eventTypes.map((e) => e.index).toList(),
     };
 
-    return _mapboxMapsPlatform.buildView(widget.androidHostingMode,
-        creationParams, onPlatformViewCreated, widget.gestureRecognizers);
+    return _mapboxMapsPlatform.buildView(
+      widget.androidHostingMode,
+      creationParams,
+      onPlatformViewCreated,
+      widget.gestureRecognizers,
+      withNavigation: widget.withNavigation,
+    );
   }
 
   @override
@@ -199,14 +221,16 @@ class _MapWidgetState extends State<MapWidget> {
 
     _events = _MapEvents(
         binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
-        channelSuffix: _suffix.toString());
+        channelSuffix: suffix.toString());
     _updateEventListeners();
   }
 
   @override
   void dispose() {
     mapboxMap?.dispose();
-    _suffixesRegistry.releaseSuffix(_suffix);
+    if (widget._shouldReleaseSuffix) {
+      _suffixesRegistry.releaseSuffix(suffix);
+    }
     _events.dispose();
 
     super.dispose();
@@ -254,6 +278,8 @@ class _MapWidgetState extends State<MapWidget> {
     mapboxMap = controller;
 
     _events.updateSubscriptions();
+
+    widget.onMapboxControllerCreated?.call(controller);
     _platformViewCreated = true;
   }
 }

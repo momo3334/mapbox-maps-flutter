@@ -8,6 +8,7 @@ import com.mapbox.bindgen.None
 import com.mapbox.bindgen.Value
 import com.mapbox.common.TileRegionError
 import com.mapbox.geojson.*
+import com.mapbox.geojson.Point
 import com.mapbox.maps.EdgeInsets
 import com.mapbox.maps.StylePackError
 import com.mapbox.maps.applyDefaultParams

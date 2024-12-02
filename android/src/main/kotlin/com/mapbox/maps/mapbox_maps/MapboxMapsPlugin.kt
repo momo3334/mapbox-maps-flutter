@@ -2,14 +2,18 @@ package com.mapbox.maps.mapbox_maps
 
 import android.content.Context
 import androidx.lifecycle.Lifecycle
+import com.mapbox.maps.mapbox_maps.navigation.NavigationInstanceManager
 import com.mapbox.maps.mapbox_maps.offline.OfflineMapInstanceManager
 import com.mapbox.maps.mapbox_maps.offline.OfflineSwitch
 import com.mapbox.maps.mapbox_maps.pigeons._MapboxMapsOptions
 import com.mapbox.maps.mapbox_maps.pigeons._MapboxOptions
+import com.mapbox.maps.mapbox_maps.pigeons._NavigationInstanceManager
 import com.mapbox.maps.mapbox_maps.pigeons._OfflineMapInstanceManager
 import com.mapbox.maps.mapbox_maps.pigeons._OfflineSwitch
+import com.mapbox.maps.mapbox_maps.pigeons._PlaceAutocompleteInstanceManager
 import com.mapbox.maps.mapbox_maps.pigeons._SnapshotterInstanceManager
 import com.mapbox.maps.mapbox_maps.pigeons._TileStoreInstanceManager
+import com.mapbox.maps.mapbox_maps.search.PlaceAutocompleteInstanceManager
 import com.mapbox.maps.mapbox_maps.snapshot.SnapshotterInstanceManager
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.FlutterPlugin.FlutterAssets
@@ -37,6 +41,20 @@ class MapboxMapsPlugin : FlutterPlugin, ActivityAware {
           }
         )
       )
+    flutterPluginBinding
+      .platformViewRegistry
+      .registerViewFactory(
+        "plugins.flutter.io/mapbox_navigation_maps",
+        MapboxNavigationMapFactory(
+          flutterPluginBinding.binaryMessenger,
+          flutterPluginBinding.flutterAssets,
+          object : LifecycleProvider {
+            override fun getLifecycle(): Lifecycle? {
+              return lifecycle
+            }
+          }
+        )
+      )
     setupStaticChannels(flutterPluginBinding.applicationContext, flutterPluginBinding.binaryMessenger, flutterPluginBinding.flutterAssets)
   }
 
@@ -44,6 +62,8 @@ class MapboxMapsPlugin : FlutterPlugin, ActivityAware {
     val optionsController = MapboxOptionsController(flutterAssets)
     val snapshotterInstanceManager = SnapshotterInstanceManager(context, binaryMessenger)
     val offlineMapInstanceManager = OfflineMapInstanceManager(context, binaryMessenger)
+    val navigationInstanceManager = NavigationInstanceManager(context, binaryMessenger)
+    val placeAutocompleteInstanceManager = PlaceAutocompleteInstanceManager(context, binaryMessenger)
     val offlineSwitch = OfflineSwitch()
     // static options handling should be setup upon attachment,
     // as options can before configured before the map view is setup
@@ -54,6 +74,8 @@ class MapboxMapsPlugin : FlutterPlugin, ActivityAware {
     _TileStoreInstanceManager.setUp(binaryMessenger, offlineMapInstanceManager)
     _OfflineSwitch.setUp(binaryMessenger, offlineSwitch)
     LoggingController.setup(binaryMessenger)
+    _NavigationInstanceManager.setUp(binaryMessenger, navigationInstanceManager)
+    _PlaceAutocompleteInstanceManager.setUp(binaryMessenger,placeAutocompleteInstanceManager)
   }
 
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {

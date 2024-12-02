@@ -26,17 +26,21 @@ class _MapboxMapsPlatform {
   }
 
   Widget buildView(
-      AndroidPlatformViewHostingMode androidHostingMode,
-      Map<String, dynamic> creationParams,
-      OnPlatformViewCreatedCallback onPlatformViewCreated,
-      Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers) {
+    AndroidPlatformViewHostingMode androidHostingMode,
+    Map<String, dynamic> creationParams,
+    OnPlatformViewCreatedCallback onPlatformViewCreated,
+    Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers, {
+    bool withNavigation = false,
+  }) {
     if (defaultTargetPlatform == TargetPlatform.android) {
       switch (androidHostingMode) {
         case AndroidPlatformViewHostingMode.TLHC_VD:
         case AndroidPlatformViewHostingMode.TLHC_HC:
         case AndroidPlatformViewHostingMode.HC:
           return PlatformViewLink(
-            viewType: "plugins.flutter.io/mapbox_maps",
+            viewType: withNavigation
+                ? "plugins.flutter.io/mapbox_navigation_maps"
+                : 'plugins.flutter.io/mapbox_maps',
             surfaceFactory: (context, controller) {
               return AndroidViewSurface(
                   controller: controller as AndroidViewController,
@@ -47,7 +51,9 @@ class _MapboxMapsPlatform {
               final AndroidViewController controller =
                   _androidViewControllerFactoryForMode(androidHostingMode)(
                 id: params.id,
-                viewType: 'plugins.flutter.io/mapbox_maps',
+                viewType: withNavigation
+                    ? "plugins.flutter.io/mapbox_navigation_maps"
+                    : 'plugins.flutter.io/mapbox_maps',
                 layoutDirection: TextDirection.ltr,
                 creationParams: creationParams,
                 creationParamsCodec: const MapInterfaces_PigeonCodec(),
@@ -66,7 +72,9 @@ class _MapboxMapsPlatform {
           );
         case AndroidPlatformViewHostingMode.VD:
           return AndroidView(
-            viewType: 'plugins.flutter.io/mapbox_maps',
+            viewType: withNavigation
+                ? "plugins.flutter.io/mapbox_navigation_maps"
+                : 'plugins.flutter.io/mapbox_maps',
             onPlatformViewCreated: onPlatformViewCreated,
             gestureRecognizers: gestureRecognizers,
             creationParams: creationParams,
@@ -126,6 +134,14 @@ class _MapboxMapsPlatform {
         'id': id,
         'belowLayerId': belowLayerId,
       });
+    } on PlatformException catch (e) {
+      return new Future.error(e);
+    }
+  }
+
+  Future<dynamic> registerNavigationCallbacks() async {
+    try {
+      return _channel.invokeMethod('navigation#registerCallbacks');
     } on PlatformException catch (e) {
       return new Future.error(e);
     }

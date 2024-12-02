@@ -26,6 +26,7 @@ import com.mapbox.maps.mapbox_maps.pigeons._AnimationManager
 import com.mapbox.maps.mapbox_maps.pigeons._CameraManager
 import com.mapbox.maps.mapbox_maps.pigeons._LocationComponentSettingsInterface
 import com.mapbox.maps.mapbox_maps.pigeons._MapInterface
+import com.mapbox.maps.mapbox_maps.pigeons._NavigationCameraManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
@@ -33,7 +34,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
 import java.io.ByteArrayOutputStream
 
-class MapboxMapController(
+open class MapboxMapController(
   context: Context,
   mapInitOptions: MapInitOptions,
   private val lifecycleProvider: MapboxMapsPlugin.LifecycleProvider,
@@ -45,12 +46,12 @@ class MapboxMapController(
   DefaultLifecycleObserver,
   MethodChannel.MethodCallHandler {
 
-  private var mapView: MapView? = null
+  protected var mapView: MapView? = null
   private var mapboxMap: MapboxMap? = null
 
   private val methodChannel: MethodChannel
   private val messenger: BinaryMessenger
-  private val channelSuffix: String
+  protected val channelSuffix: String
 
   private val styleController: StyleController
   private val cameraController: CameraController
@@ -73,7 +74,7 @@ class MapboxMapController(
     `parentLifecycle` is the lifecycle of the Flutter activity, which may live much longer then
     the MapView attached.
   */
-  private class LifecycleHelper(
+  protected class LifecycleHelper(
     val parentLifecycle: Lifecycle,
     val shouldDestroyOnDestroy: Boolean,
   ) : LifecycleOwner, DefaultLifecycleObserver {
@@ -122,7 +123,7 @@ class MapboxMapController(
     }
   }
 
-  private var lifecycleHelper: LifecycleHelper? = null
+  protected var lifecycleHelper: LifecycleHelper? = null
 
   init {
     this.messenger = messenger
@@ -132,7 +133,8 @@ class MapboxMapController(
     val mapboxMap = mapView.mapboxMap
     this.mapView = mapView
     this.mapboxMap = mapboxMap
-    eventHandler = MapboxEventHandler(mapboxMap.styleManager, messenger, eventTypes, this.channelSuffix)
+    eventHandler =
+      MapboxEventHandler(mapboxMap.styleManager, messenger, eventTypes, this.channelSuffix)
     styleController = StyleController(context, mapboxMap)
     cameraController = CameraController(mapboxMap, context)
     projectionController = MapProjectionController(mapboxMap)
@@ -154,7 +156,11 @@ class MapboxMapController(
     _MapInterface.setUp(messenger, mapInterfaceController, this.channelSuffix)
     _AnimationManager.setUp(messenger, animationController, this.channelSuffix)
     annotationController.setup(messenger, this.channelSuffix)
-    _LocationComponentSettingsInterface.setUp(messenger, locationComponentController, this.channelSuffix)
+    _LocationComponentSettingsInterface.setUp(
+      messenger,
+      locationComponentController,
+      this.channelSuffix
+    )
     LogoSettingsInterface.setUp(messenger, logoController, this.channelSuffix)
     GesturesSettingsInterface.setUp(messenger, gestureController, this.channelSuffix)
     AttributionSettingsInterface.setUp(messenger, attributionController, this.channelSuffix)
@@ -216,21 +222,26 @@ class MapboxMapController(
       "annotation#create_manager" -> {
         annotationController.handleCreateManager(call, result)
       }
+
       "annotation#remove_manager" -> {
         annotationController.handleRemoveManager(call, result)
       }
+
       "gesture#add_listeners" -> {
         gestureController.addListeners(messenger, channelSuffix)
         result.success(null)
       }
+
       "gesture#remove_listeners" -> {
         gestureController.removeListeners()
         result.success(null)
       }
+
       "platform#releaseMethodChannels" -> {
         dispose()
         result.success(null)
       }
+
       "map#snapshot" -> {
         val mapView = mapView
         val snapshot = mapView?.snapshot()
@@ -246,6 +257,7 @@ class MapboxMapController(
           result.success(byteArray)
         }
       }
+
       else -> {
         result.notImplemented()
       }
@@ -254,6 +266,9 @@ class MapboxMapController(
 
   private fun changeUserAgent(version: String) {
     SettingsServiceFactory.getInstance(SettingsServiceStorageType.NON_PERSISTENT)
-      .set("com.mapbox.common.telemetry.internal.custom_user_agent_fragment", Value.valueOf("FlutterPlugin/$version"))
+      .set(
+        "com.mapbox.common.telemetry.internal.custom_user_agent_fragment",
+        Value.valueOf("FlutterPlugin/$version")
+      )
   }
 }

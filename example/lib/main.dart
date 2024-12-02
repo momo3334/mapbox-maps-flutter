@@ -62,11 +62,14 @@ class MapsDemo extends StatelessWidget {
   //
   // Alternatively you can replace `String.fromEnvironment("ACCESS_TOKEN")`
   // in the following line with your access token directly.
-  static const String ACCESS_TOKEN = String.fromEnvironment("ACCESS_TOKEN");
+  // static const String ACCESS_TOKEN = String.fromEnvironment("ACCESS_TOKEN");
+  static const String ACCESS_TOKEN =
+      "pk.eyJ1IjoiYmlwYmlwbWUiLCJhIjoiY2x6d3dsOHpiMGxjcDJsb2RpcWNwem16MCJ9.auzsjEfrOnmeIIVevYb7fw";
 
   void _pushPage(BuildContext context, Example page) async {
     Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (_) => Scaffold(
+              resizeToAvoidBottomInset: false,
               appBar: AppBar(title: Text(page.title)),
               body: page,
             )));
@@ -75,6 +78,7 @@ class MapsDemo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(title: const Text('MapboxMaps examples')),
       body: ACCESS_TOKEN.isEmpty || ACCESS_TOKEN.contains("YOUR_TOKEN")
           ? buildAccessTokenWarning()
