@@ -160,7 +160,7 @@ class _NavigationMapState extends State<NavigationMap> {
                 43.70908256335716,
               )),
           zoom: 3.0),
-      styleUri: MapboxStyles.STANDARD,
+      styleUri: widget.styleUri,
       textureView: true,
       onMapCreated: widget.onMapCreated,
       onStyleLoadedListener: widget.onStyleLoadedListener,
@@ -206,7 +206,6 @@ class _NavigationMapState extends State<NavigationMap> {
 
   @override
   void dispose() {
-    mapboxMap?.dispose();
     _suffixesRegistry.releaseSuffix(_suffix);
     _events.dispose();
 

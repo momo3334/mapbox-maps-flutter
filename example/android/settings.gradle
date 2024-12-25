@@ -16,6 +16,7 @@ pluginManagement {
     }
 }
 
+
 plugins {
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
     id "com.android.application" version '8.7.1' apply false
@@ -24,6 +25,8 @@ plugins {
 }
 
 include ":app"
+rootProject.name = "Android Mapbox Custom"
+
 
 if (file("../../../scripts/utils.gradle").exists()) {
     apply from: "../../../scripts/utils.gradle"

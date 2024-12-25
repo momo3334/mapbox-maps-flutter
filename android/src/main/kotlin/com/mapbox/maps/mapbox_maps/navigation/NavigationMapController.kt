@@ -147,9 +147,9 @@ class NavigationMapController(
           firstLocationUpdateReceived = true
           navigationCamera.requestNavigationCameraToOverview(
             stateTransitionOptions =
-              NavigationCameraTransitionOptions.Builder()
-                .maxDuration(0) // instant transition
-                .build()
+            NavigationCameraTransitionOptions.Builder()
+              .maxDuration(0) // instant transition
+              .build()
           )
         }
       }
@@ -264,15 +264,15 @@ class NavigationMapController(
         ?.addViewAnnotation(
           resId = com.mapbox.maps.mapbox_maps.R.layout.item_dva_eta,
           options =
-            viewAnnotationOptions {
-              annotatedLayerFeature("mapbox-layerGroup-1-main")
-              annotationAnchors(
-                { anchor(ViewAnnotationAnchor.TOP_RIGHT) },
-                { anchor(ViewAnnotationAnchor.TOP_LEFT) },
-                { anchor(ViewAnnotationAnchor.BOTTOM_RIGHT) },
-                { anchor(ViewAnnotationAnchor.BOTTOM_LEFT) },
-              )
-            },
+          viewAnnotationOptions {
+            annotatedLayerFeature("mapbox-layerGroup-1-main")
+            annotationAnchors(
+              { anchor(ViewAnnotationAnchor.TOP_RIGHT) },
+              { anchor(ViewAnnotationAnchor.TOP_LEFT) },
+              { anchor(ViewAnnotationAnchor.BOTTOM_RIGHT) },
+              { anchor(ViewAnnotationAnchor.BOTTOM_LEFT) },
+            )
+          },
           asyncInflater = AsyncLayoutInflater(context),
           asyncInflateCallback = { annotationView: View ->
             primaryEtaAnnotation = annotationView
@@ -293,15 +293,15 @@ class NavigationMapController(
         ?.addViewAnnotation(
           resId = com.mapbox.maps.mapbox_maps.R.layout.item_dva_eta,
           options =
-            viewAnnotationOptions {
-              annotatedLayerFeature("mapbox-layerGroup-2-main")
-              annotationAnchors(
-                { anchor(ViewAnnotationAnchor.TOP_RIGHT) },
-                { anchor(ViewAnnotationAnchor.TOP_LEFT) },
-                { anchor(ViewAnnotationAnchor.BOTTOM_RIGHT) },
-                { anchor(ViewAnnotationAnchor.BOTTOM_LEFT) },
-              )
-            },
+          viewAnnotationOptions {
+            annotatedLayerFeature("mapbox-layerGroup-2-main")
+            annotationAnchors(
+              { anchor(ViewAnnotationAnchor.TOP_RIGHT) },
+              { anchor(ViewAnnotationAnchor.TOP_LEFT) },
+              { anchor(ViewAnnotationAnchor.BOTTOM_RIGHT) },
+              { anchor(ViewAnnotationAnchor.BOTTOM_LEFT) },
+            )
+          },
           asyncInflater = AsyncLayoutInflater(context),
           asyncInflateCallback = { annotationView: View ->
             altEtaAnnotation = annotationView
@@ -441,7 +441,7 @@ class NavigationMapController(
     mapView?.mapboxMap?.style?.apply {
       if (
         routeLineView.getPrimaryRouteVisibility(this) == Visibility.VISIBLE &&
-          routeLineView.getAlternativeRoutesVisibility(this) == Visibility.VISIBLE
+        routeLineView.getAlternativeRoutesVisibility(this) == Visibility.VISIBLE
       ) {
         routeLineApi.findClosestRoute(it, mapView!!.mapboxMap, 30f) {
           if (it.isValue) {
@@ -474,13 +474,24 @@ class NavigationMapController(
     // the value of this option will depend on the style that you are using
     // and under which layer the route line should be placed on the map layers stack
     val mapboxRouteLineApiOptions =
-      MapboxRouteLineApiOptions.Builder().vanishingRouteLineEnabled(true).build()
+      MapboxRouteLineApiOptions.Builder().vanishingRouteLineEnabled(true)
+        .styleInactiveRouteLegsIndependently(true).build()
     routeLineApi = MapboxRouteLineApi(mapboxRouteLineApiOptions)
     val mapboxRouteLineViewOptions =
       MapboxRouteLineViewOptions.Builder(context)
         .routeLineBelowLayerId("road-label-navigation")
         .routeLineColorResources(
-          RouteLineColorResources.Builder().routeLineTraveledColor(Color.GRAY).build()
+          RouteLineColorResources.Builder()
+            .routeLineTraveledColor(Color.GRAY)
+            .alternativeRouteDefaultColor(Color.GREEN)
+            .alternativeRouteClosureColor(Color.MAGENTA)
+            .alternativeRouteUnknownCongestionColor(Color.parseColor("#BCCEFB"))
+            .alternativeRouteModerateCongestionColor(Color.parseColor("#BCCEFB"))
+            .alternativeRouteLowCongestionColor(Color.parseColor("#BCCEFB"))
+            .alternativeRouteHeavyCongestionColor(Color.parseColor("#BCCEFB"))
+            .alternativeRouteSevereCongestionColor(Color.parseColor("#BCCEFB"))
+            .alternativeRouteCasingColor(Color.parseColor("#6A83D7"))
+            .build()
         )
         .displaySoftGradientForTraffic(true)
         .build()
@@ -520,19 +531,19 @@ class NavigationMapController(
         LocationPuck2D(
           bearingImage = ImageHolder.Companion.from(R.drawable.mapbox_navigation_puck_icon),
           scaleExpression =
-            interpolate {
-                linear()
-                zoom()
-                stop {
-                  literal(0)
-                  literal(0.3)
-                }
-                stop {
-                  literal(20.0)
-                  literal(1.0)
-                }
-              }
-              .toJson(),
+          interpolate {
+            linear()
+            zoom()
+            stop {
+              literal(0)
+              literal(0.3)
+            }
+            stop {
+              literal(20.0)
+              literal(1.0)
+            }
+          }
+            .toJson(),
         )
       puckBearing = PuckBearing.HEADING
       puckBearingEnabled = true

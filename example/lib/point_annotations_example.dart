@@ -31,6 +31,7 @@ class PointAnnotationExampleState extends State<PointAnnotationExample> {
   PointAnnotation? pointAnnotation;
   PointAnnotationManager? pointAnnotationManager;
   int styleIndex = 1;
+
   _onMapCreated(MapboxMap mapboxMap) {
     this.mapboxMap = mapboxMap;
     mapboxMap.setCamera(CameraOptions(
@@ -51,7 +52,7 @@ class PointAnnotationExampleState extends State<PointAnnotationExample> {
       var carOptions = <PointAnnotationOptions>[];
       for (var i = 0; i < 20; i++) {
         carOptions.add(PointAnnotationOptions(
-            geometry: createRandomPoint(), iconImage: "car-15"));
+            geometry: createRandomPoint(), iconImage: "car-rental"));
       }
       pointAnnotationManager?.createMulti(carOptions);
       pointAnnotationManager
@@ -73,7 +74,7 @@ class PointAnnotationExampleState extends State<PointAnnotationExample> {
             iconSize: 1.3,
             iconOffset: [0.0, -5.0],
             symbolSortKey: 10,
-            image: list))
+            iconImage: "car-15"))
         .then((value) => pointAnnotation = value);
   }
 

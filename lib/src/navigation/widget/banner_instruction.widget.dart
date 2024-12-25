@@ -12,58 +12,93 @@ class BannerInstruction extends StatelessWidget {
         if (value.routeProgress?.bannerInstructions == null) {
           return Container();
         } else {
-          return Container(
-            width: 175,
-            decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.all(Radius.circular(8))
-            ),
-            padding: EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  // TODO: Convert to font for better vertical baseline alignment (only works with icon fonts).
-                  // crossAxisAlignment: CrossAxisAlignment.baseline,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Color(0xfffffbf6),
+                border: Border.all(
+                  color: Color(0xffffdeb1),
+                  width: 1,
+                ),
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.14),
+                    offset: Offset(0, 2),
+                    blurRadius: 4,
+                    spreadRadius: -1,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.12),
+                    offset: Offset(0, 4),
+                    blurRadius: 5,
+                    spreadRadius: 0,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    offset: Offset(0, 1),
+                    blurRadius: 10,
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.max,
                     // TODO: Convert to font for better vertical baseline alignment (only works with icon fonts).
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: getTurnIcon(
-                          type: value
-                              .routeProgress?.bannerInstructions?.primary?.type,
-                          modifier: value.routeProgress?.bannerInstructions
-                              ?.primary?.modifier,
-                          drivingSide: "right"),
-                    ),
-                    Expanded(
-                      child: Text(
-                        getText(
-                          value.routeProgress?.currentLegProgress
-                              ?.currentStepProgress?.distanceRemaining,
+                    // crossAxisAlignment: CrossAxisAlignment.baseline,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      // TODO: Convert to font for better vertical baseline alignment (only works with icon fonts).
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: 8.0, left: 16, right: 16,),
+                        child: getTurnIcon(
+                            type: value.routeProgress?.bannerInstructions
+                                ?.primary?.type,
+                            modifier: value.routeProgress?.bannerInstructions
+                                ?.primary?.modifier,
+                            drivingSide: "right"),
+                      ),
+                      Expanded(
+                        child: Text(
+                          getText(
+                            value.routeProgress?.currentLegProgress
+                                ?.currentStepProgress?.distanceRemaining,
+                          ),
+                          textAlign: TextAlign.left,
+                          style: Theme
+                              .of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w500),
                         ),
-                        textAlign: TextAlign.center,
-                        style: Theme
-                            .of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      value.routeProgress?.bannerInstructions?.primary?.text ??
+                          "",
+                      textAlign: TextAlign.center,
+                      style: Theme
+                          .of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 20,
                       ),
                     ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    value.routeProgress?.bannerInstructions?.primary?.text ??
-                        "",
-                    textAlign: TextAlign.center,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }
@@ -87,7 +122,7 @@ class BannerInstruction extends StatelessWidget {
       return "${(roundedDistance).toStringAsFixed(
           (roundedDistance).roundToDouble() == roundedDistance ? 0 : 1)}km";
     } else {
-      return "${distance.round() / 1000}km";
+      return "${(distance / 1000).round()}km";
     }
   }
 

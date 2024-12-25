@@ -12,7 +12,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:mapbox_maps_flutter/src/navigation/banner_instruction.dart';
 import 'package:meta/meta.dart';
@@ -158,7 +158,7 @@ part 'src/navigation/navigation_session_status.dart';
 
 part 'src/navigation/route_progress_event.dart';
 
-part 'src/navigation/speed_limit.dart';
+part 'src/navigation/location_matcher_result.dart';
 
 part 'src/navigation/navigation_event_types.enum.dart';
 

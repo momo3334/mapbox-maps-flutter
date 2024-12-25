@@ -22,7 +22,7 @@ final class _NavigationMapEvents {
   _NavigationMapEvents(
       {required this.binaryMessenger, required String channelSuffix}) {
     final pigeonChannelSuffix =
-    channelSuffix.isNotEmpty ? '.$channelSuffix' : '';
+        channelSuffix.isNotEmpty ? '.$channelSuffix' : '';
     _channel = MethodChannel(
         'com.mapbox.maps.flutter.navigation_map_events$pigeonChannelSuffix',
         const StandardMethodCodec(),
@@ -39,17 +39,15 @@ final class _NavigationMapEvents {
       }
     } catch (error) {
       print(
-          "Handle method call ${call.method}, arguments: ${call
-              .arguments} with error: $error");
+          "Handle method call ${call.method}, arguments: ${call.arguments} with error: $error");
     }
   }
 
   void _handleEvents(MethodCall call) {
     final eventType =
-    _NavigationEventTypes.values[int.parse(call.method.split("#")[1])];
+        _NavigationEventTypes.values[int.parse(call.method.split("#")[1])];
     switch (eventType) {
       case _NavigationEventTypes.routeLineChanged:
-        final allo = 1;
         _onRouteLineChangedListener
             ?.call(RouteChangedEventData.fromJson(jsonDecode(call.arguments)));
         break;

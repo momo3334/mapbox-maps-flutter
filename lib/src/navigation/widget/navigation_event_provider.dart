@@ -11,18 +11,19 @@ class NavigationEventProvider extends StatelessWidget {
       initialData: null,
       create: (BuildContext context) =>
           NavigationManager.createWithEventStreams(),
-      child: Consumer<NavigationManager?>(
-        builder: (context, _, __) {
-          return ChangeNotifierProxyProvider<NavigationManager?,
-              NavigationEvents>(
-            update: (_, navigationManager, navigationEvents) =>
-                navigationManager == null
-                    ? navigationEvents!
-                    : navigationManager._navigationEvents,
-            create: (_) => NavigationEvents(),
-            child: child,
-          );
+      child: ChangeNotifierProxyProvider<NavigationManager?, NavigationEvents>(
+        lazy: false,
+        update: (_, navigationManager, navigationEvents) {
+          if (navigationManager == null) {
+            return navigationEvents!;
+          } else {
+            return navigationEvents!.._setupEventStreams(navigationManager);
+          }
         },
+        create: (_) {
+          return NavigationEvents();
+        },
+        child: child,
       ),
     );
   }
