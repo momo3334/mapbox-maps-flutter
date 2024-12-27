@@ -48,6 +48,7 @@ rootProject.allprojects {
                 password = token
             }
         }
+        maven { url 'https://jitpack.io' }
     }
 }
 
