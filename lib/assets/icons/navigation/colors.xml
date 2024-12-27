@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="maneuverTurnIconColor">#000000ff</color>
+    <color name="maneuverTurnIconShadowColor">#A8A8A8ff</color>
+</resources>

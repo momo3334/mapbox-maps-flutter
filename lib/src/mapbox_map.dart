@@ -208,9 +208,22 @@ class MapboxMap extends ChangeNotifier {
           binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
           messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString());
 
+  late _NavigationManager _example = _NavigationManager(
+    binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
+    messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString(),
+  );
+
+  late _NavigationCameraManager _navigationCameraManager =
+      _NavigationCameraManager(
+          binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
+          messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString());
+
   OnMapTapListener? onMapTapListener;
   OnMapLongTapListener? onMapLongTapListener;
   OnMapScrollListener? onMapScrollListener;
+
+  String get _messageChannel =>
+      "navigation/${_mapboxMapsPlatform.channelSuffix.toString()}";
 
   @override
   void dispose() {
@@ -633,6 +646,10 @@ class MapboxMap extends ChangeNotifier {
     _setupGestures();
   }
 
+  void registerNavigationCallbacks() {
+    _mapboxMapsPlatform.registerNavigationCallbacks();
+  }
+
   /// Returns a snapshot of the map.
   /// The snapshot is taken from the current state of the map.
   Future<Uint8List> snapshot() => _mapboxMapsPlatform.snapshot();
@@ -647,6 +664,19 @@ class MapboxMap extends ChangeNotifier {
   @experimental
   Future<void> setSnapshotLegacyMode(bool enable) =>
       _mapInterface.setSnapshotLegacyMode(enable);
+
+  void exampleCall() => _example.example();
+
+  void setRoute(GeoPoint origin, GeoPoint destination) => _example.setRoute(
+        origin,
+        destination,
+      );
+
+  Future<void> requestNavigationCameraToOverview() =>
+      _navigationCameraManager.requestNavigationCameraToOverview();
+
+  Future<void> requestNavigationCameraToFollowing() =>
+      _navigationCameraManager.requestNavigationCameraToFollowing();
 }
 
 class _GestureListener extends GestureListener {

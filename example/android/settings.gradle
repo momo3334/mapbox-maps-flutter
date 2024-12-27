@@ -16,15 +16,27 @@ pluginManagement {
     }
 }
 
+
 plugins {
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
-    id "com.android.application" version "7.3.0" apply false
+    id "com.android.application" version '8.7.1' apply false
     id "org.jetbrains.kotlin.android" version "1.8.22" apply false
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
 }
 
 include ":app"
+rootProject.name = "Android Mapbox Custom"
+
 
 if (file("../../../scripts/utils.gradle").exists()) {
     apply from: "../../../scripts/utils.gradle"
     setupExtendedDebugEnvironment()
+}
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
 }

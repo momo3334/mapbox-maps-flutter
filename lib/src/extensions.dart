@@ -48,8 +48,8 @@ extension _MbxEdgeInsetsCodable on MbxEdgeInsets {
 extension ScreenBoxToJson on ScreenBox {
   dynamic toJson() {
     return <String, dynamic>{
-      'min': min.toJson(),
-      'max': max.toJson(),
+      'min': this.min.toJson(),
+      'max': this.max.toJson(),
     };
   }
 }

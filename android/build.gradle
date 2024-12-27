@@ -2,6 +2,11 @@ group 'com.mapbox.maps.mapbox_maps'
 version '1.0.0'
 
 buildscript {
+    ext {
+
+        agp_version1 = '8.3.0'
+        agp_version = '7.4.2'
+    }
     ext.kotlin_version = '1.8.22'
     repositories {
         google()
@@ -9,21 +14,41 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.3.0'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.android.tools.build:gradle:$agp_version1"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21"
     }
 }
 
 rootProject.allprojects {
+    def token = System.getenv("SDK_REGISTRY_TOKEN") ?: project.findProperty('SDK_REGISTRY_TOKEN') ?: System.getenv("MAPBOX_DOWNLOADS_TOKEN") ?: project.findProperty('MAPBOX_DOWNLOADS_TOKEN')
+
+    if (token == null || token.empty) {
+        throw new Exception("SDK Registry token is null. See README.md for more information.")
+    }
     repositories {
         google()
         mavenCentral()
         maven {
             url 'https://api.mapbox.com/downloads/v2/releases/maven'
+            authentication {
+                basic(BasicAuthentication)
+            }
+            credentials {
+                username = "mapbox"
+                password = token
+            }
         }
         maven {
             url 'https://api.mapbox.com/downloads/v2/snapshots/maven'
+            authentication {
+                basic(BasicAuthentication)
+            }
+            credentials {
+                username = "mapbox"
+                password = token
+            }
         }
+        maven { url 'https://jitpack.io' }
     }
 }
 
@@ -31,7 +56,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdk 33
+    compileSdk 35
 
     namespace 'com.mapbox.maps.mapbox_maps'
     sourceSets {
@@ -59,8 +84,21 @@ if (file("$rootDir/gradle/ktlint.gradle").exists() && file("$rootDir/gradle/lint
 }
 
 dependencies {
-    implementation "com.mapbox.maps:android:11.9.0"
+    implementation "com.mapbox.maps:android:11.8.0"
+    implementation "com.mapbox.navigationcore:navigation:3.5.1"
+    implementation "com.mapbox.navigationcore:ui-maps:3.5.1"
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation "com.mapbox.navigationcore:ui-components:3.5.1"
+    implementation "com.mapbox.navigationcore:android:3.5.1"
+    implementation "com.mapbox.navigationcore:tripdata:3.5.1"
+    implementation "com.mapbox.navigationcore:copilot:3.5.1"
+    implementation "com.mapbox.search:place-autocomplete:2.6.1"
 
-    implementation "androidx.annotation:annotation:1.5.0"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2"
+    implementation "com.github.adrielcafe.broker:broker-core:1.1.2"
+
+
+    implementation "androidx.annotation:annotation:1.9.1"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.7"
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+    implementation 'androidx.asynclayoutinflater:asynclayoutinflater:1.0.0'
 }

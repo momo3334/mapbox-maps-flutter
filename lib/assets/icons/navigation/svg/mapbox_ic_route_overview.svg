@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="14" viewBox="0 0 16 14">
+  <g/>
+  <g/>
+  <g>
+    <path d="M-5,-5 L21,-5 L21,19 L-5,19 Z" fill="@color/mapbox_route_overview_drawable_color"/>
+  </g>
+</svg>

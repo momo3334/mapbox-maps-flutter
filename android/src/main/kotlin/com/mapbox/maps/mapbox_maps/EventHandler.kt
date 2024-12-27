@@ -49,7 +49,8 @@ class MapboxEventHandler(
 
   init {
     val pigeon_channelSuffix = if (channelSuffix.isNotEmpty()) ".$channelSuffix" else ""
-    channel = MethodChannel(binaryMessenger, "com.mapbox.maps.flutter.map_events$pigeon_channelSuffix")
+    channel =
+      MethodChannel(binaryMessenger, "com.mapbox.maps.flutter.map_events$pigeon_channelSuffix")
     channel.setMethodCallHandler(this)
 
     eventTypes.mapNotNull { _MapEvent.ofRaw(it.toInt()) }
@@ -78,66 +79,79 @@ class MapboxEventHandler(
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.MAP_LOADING_ERROR -> eventProvider.subscribe(
         MapLoadingErrorCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.STYLE_LOADED -> eventProvider.subscribe(
         StyleLoadedCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.STYLE_DATA_LOADED -> eventProvider.subscribe(
         StyleDataLoadedCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.CAMERA_CHANGED -> eventProvider.subscribe(
         CameraChangedCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.MAP_IDLE -> eventProvider.subscribe(
         MapIdleCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.SOURCE_ADDED -> eventProvider.subscribe(
         SourceAddedCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.SOURCE_REMOVED -> eventProvider.subscribe(
         SourceRemovedCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.SOURCE_DATA_LOADED -> eventProvider.subscribe(
         SourceDataLoadedCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.STYLE_IMAGE_MISSING -> eventProvider.subscribe(
         StyleImageMissingCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.STYLE_IMAGE_REMOVE_UNUSED -> eventProvider.subscribe(
         StyleImageRemoveUnusedCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.RENDER_FRAME_STARTED -> eventProvider.subscribe(
         RenderFrameStartedCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.RENDER_FRAME_FINISHED -> eventProvider.subscribe(
         RenderFrameFinishedCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
         }
       ).also { cancellables.add(it) }
+
       _MapEvent.RESOURCE_REQUEST -> eventProvider.subscribe(
         ResourceRequestCallback {
           channel.invokeMethod(event.methodName, gson.toJson(it))
@@ -171,6 +185,7 @@ class EnumOrdinalTypeAdapter<T>() : TypeAdapter<T>() {
   override fun write(out: JsonWriter?, value: T) {
     out?.value((value as Enum<*>).ordinal)
   }
+
   override fun read(`in`: JsonReader?): T {
     throw NotImplementedError("Not supported")
   }
