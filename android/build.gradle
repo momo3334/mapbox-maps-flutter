@@ -84,7 +84,7 @@ if (file("$rootDir/gradle/ktlint.gradle").exists() && file("$rootDir/gradle/lint
 }
 
 dependencies {
-    implementation "com.mapbox.maps:android:11.8.0"
+    implementation "com.mapbox.maps:android:11.9.0"
     implementation "com.mapbox.navigationcore:navigation:3.5.1"
     implementation "com.mapbox.navigationcore:ui-maps:3.5.1"
     implementation 'com.google.code.gson:gson:2.11.0'

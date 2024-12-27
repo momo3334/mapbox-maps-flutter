@@ -44,7 +44,7 @@ enum AndroidPlatformViewHostingMode {
 /// and for ensuring your use adheres to the relevant terms of use.
 class MapWidget extends StatefulWidget {
   MapWidget({
-    Key? key,
+    super.key,
     this.mapOptions,
     this.cameraOptions,
     // FIXME Flutter 3.x has memory leak on Android using in SurfaceView mode, see https://github.com/flutter/flutter/issues/118384
@@ -71,14 +71,13 @@ class MapWidget extends StatefulWidget {
     this.onTapListener,
     this.onLongTapListener,
     this.onScrollListener,
+    this.viewport,
     this.withNavigation = false,
     this.onMapboxControllerCreated,
-    int? suffix,
-  }) : super(key: key) {
+    this.suffix,
+  }) {
     LogConfiguration._setupDebugLoggingIfNeeded();
-    _mapWidgetState = _MapWidgetState(
-      suffix ?? _suffixesRegistry.getSuffix(),
-    );
+
     _shouldReleaseSuffix = (suffix == null);
   }
 
@@ -166,22 +165,43 @@ class MapWidget extends StatefulWidget {
   /// were not claimed by any other gesture recognizer.
   final Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers;
 
+  /// The initial camera position and behavior of the map.
+  ///
+  /// Use [viewport] to specify how the camera is positioned when the map is first displayed.
+  /// By providing a [ViewportState] subclass, you can control the camera's initial focus,
+  /// such as centering on a specific location or following the user's position.
+  ///
+  /// If [viewport] is not provided, the map uses its default camera settings.
+  ///
+  /// **Example:**
+  ///
+  /// ```dart
+  /// MapWidget(
+  ///   viewport: CameraViewportState(
+  ///     center: Point(coordinates: Position(-117.918976, 33.812092)),
+  ///     zoom: 15.0,
+  ///   ),
+  /// );
+  /// ```
+  final ViewportState? viewport;
   final OnMapboxControllerCreatedCallback? onMapboxControllerCreated;
 
   final bool withNavigation;
-
-  late final _mapWidgetState;
 
   final OnMapTapListener? onTapListener;
   final OnMapLongTapListener? onLongTapListener;
   final OnMapScrollListener? onScrollListener;
 
-  @override
-  State createState() {
-    return _mapWidgetState;
-  }
+  final int? suffix;
 
-  MapboxMap? getMapboxMap() => _mapWidgetState.mapboxMap;
+  @override
+  State createState() => _MapWidgetState(
+        suffix ?? _suffixesRegistry.getSuffix(),
+      );
+
+  @Deprecated(
+      'Subscribe to onMapCreated to receive an instance of MapboxMap instead')
+  MapboxMap? getMapboxMap() => null;
 }
 
 class _MapWidgetState extends State<MapWidget> {
@@ -190,7 +210,9 @@ class _MapWidgetState extends State<MapWidget> {
   final int suffix;
   late final _MapEvents _events;
   bool _platformViewCreated = false;
+  bool _needsStateUpdate = false;
   MapboxMap? mapboxMap;
+  GlobalKey key = GlobalKey();
 
   _MapWidgetState(this.suffix);
 
@@ -202,9 +224,10 @@ class _MapWidgetState extends State<MapWidget> {
       'textureView': widget.textureView,
       'styleUri': widget.styleUri,
       'channelSuffix': _mapboxMapsPlatform.channelSuffix,
-      'mapboxPluginVersion': '2.4.0',
+      'mapboxPluginVersion': '2.5.0',
       'eventTypes': _events.eventTypes.map((e) => e.index).toList(),
     };
+    _events.subscribedEventTypes = _events.eventTypes;
 
     return _mapboxMapsPlatform.buildView(
       widget.androidHostingMode,
@@ -212,6 +235,7 @@ class _MapWidgetState extends State<MapWidget> {
       onPlatformViewCreated,
       widget.gestureRecognizers,
       withNavigation: widget.withNavigation,
+      key: key,
     );
   }
 
@@ -219,10 +243,30 @@ class _MapWidgetState extends State<MapWidget> {
   void initState() {
     super.initState();
 
+    LogConfiguration._setupDebugLoggingIfNeeded();
     _events = _MapEvents(
         binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
         channelSuffix: suffix.toString());
     _updateEventListeners();
+    // Here we mark the state as needing an update to ensure
+    // the widget configuration is propagated to the platform side.
+    //
+    // No need to call _updateStateIfNeeded() here as the platform view is not yet created.
+    _markNeedsStateUpdate();
+  }
+
+  void _markNeedsStateUpdate() {
+    _needsStateUpdate = true;
+  }
+
+  void _updateStateIfNeeded({MapWidget? oldWidget}) {
+    if (!_needsStateUpdate) {
+      return;
+    }
+    _updateViewportState(oldWidget);
+    _updateEventListeners();
+    _events.updateSubscriptions();
+    _needsStateUpdate = false;
   }
 
   @override
@@ -231,6 +275,7 @@ class _MapWidgetState extends State<MapWidget> {
     if (widget._shouldReleaseSuffix) {
       _suffixesRegistry.releaseSuffix(suffix);
     }
+    _needsStateUpdate = false;
     _events.dispose();
 
     super.dispose();
@@ -244,6 +289,34 @@ class _MapWidgetState extends State<MapWidget> {
 
     if (_platformViewCreated) {
       _events.updateSubscriptions();
+    }
+    // Widget properties have changed, mark the state as needing an update
+    // and update the state(if platform view has been created already).
+    _markNeedsStateUpdate();
+    _updateStateIfNeeded(oldWidget: oldWidget);
+  }
+
+  void _updateViewportState(MapWidget? oldWidget) async {
+    final mapboxMap = this.mapboxMap;
+    if (mapboxMap == null) {
+      return;
+    }
+    final currentViewport = widget.viewport;
+    if (currentViewport == oldWidget?.viewport || currentViewport == null) {
+      return;
+    }
+    final viewportAnimation = _viewportTransition;
+    _viewportTransition = null;
+    final completion = _viewportTransitionCompletion;
+
+    final result = await mapboxMap._viewportMessenger.transition(
+        currentViewport._toStorage(), viewportAnimation?._toStorage());
+
+    if (_viewportTransitionCompletion == completion) {
+      _viewportTransitionCompletion = null;
+      if (mounted) {
+        completion?.call(result);
+      }
     }
   }
 
@@ -279,6 +352,22 @@ class _MapWidgetState extends State<MapWidget> {
 
     _events.updateSubscriptions();
 
+    widget.onMapboxControllerCreated?.call(controller);
+    _platformViewCreated = true;
+
+    // WARNING: Because platform view is not sized at this moment on iOS,
+    // it is not safe to call methods that depend on the size of the platform view,
+    // e.g. `setCamera` or any high-level API built on top of it(animations, viewport).
+    //
+    // As a way to address this we pass the size hint to the view upon creation.
+    final size = key.currentContext?.size;
+    if (size != null) {
+      await _mapboxMapsPlatform.submitViewSizeHint(
+          width: size.width, height: size.height);
+    }
+
+    // The platform view is created, update the state if there were any requests.
+    _updateStateIfNeeded();
     widget.onMapboxControllerCreated?.call(controller);
     _platformViewCreated = true;
   }

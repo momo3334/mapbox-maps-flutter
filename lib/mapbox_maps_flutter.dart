@@ -165,3 +165,67 @@ part 'src/navigation/navigation_event_types.enum.dart';
 part 'src/navigation/navigation_events_data.dart';
 
 part 'src/navigation/navigation_map.widget.dart';
+
+part 'src/navigation/navigation_events.dart';
+
+part 'src/navigation/navigation_map_events.dart';
+
+part 'src/navigation/navigation_manager.dart';
+
+part 'src/navigation/widget/navigation_event_provider.dart';
+
+part 'src/navigation/widget/navigation_manager_consumer.dart';
+
+part 'src/navigation/widget/navigation_event_consumer.dart';
+
+part 'src/navigation/widget/speed_limit_widget.dart';
+
+part 'src/search/PlaceAutocomplete.dart';
+
+part 'src/search/widget/place_autocomplete_search.dart';
+
+part 'src/search/widget/result_list_view.dart';
+
+part 'src/navigation/navigation_session_status.dart';
+
+part 'src/navigation/route_progress_event.dart';
+
+part 'src/navigation/location_matcher_result.dart';
+
+part 'src/navigation/navigation_event_types.enum.dart';
+
+part 'src/navigation/navigation_events_data.dart';
+
+part 'src/navigation/navigation_map.widget.dart';
+
+part 'src/navigation/navigation_events.dart';
+
+part 'src/navigation/navigation_map_events.dart';
+
+part 'src/navigation/navigation_manager.dart';
+
+part 'src/navigation/widget/navigation_event_provider.dart';
+
+part 'src/navigation/widget/navigation_manager_consumer.dart';
+
+part 'src/navigation/widget/navigation_event_consumer.dart';
+
+part 'src/navigation/widget/speed_limit_widget.dart';
+
+part 'src/search/PlaceAutocomplete.dart';
+
+part 'src/search/widget/place_autocomplete_search.dart';
+
+part 'src/search/widget/result_list_view.dart';
+
+part 'src/navigation/navigation_session_status.dart';
+
+part 'src/navigation/route_progress_event.dart';
+
+part 'src/navigation/location_matcher_result.dart';
+
+part 'src/navigation/navigation_event_types.enum.dart';
+
+part 'src/navigation/navigation_events_data.dart';
+
+part 'src/navigation/navigation_map.widget.dart';

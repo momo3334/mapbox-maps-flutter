@@ -26,18 +26,19 @@ class _MapboxMapsPlatform {
   }
 
   Widget buildView(
-    AndroidPlatformViewHostingMode androidHostingMode,
-    Map<String, dynamic> creationParams,
-    OnPlatformViewCreatedCallback onPlatformViewCreated,
-    Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers, {
-    bool withNavigation = false,
-  }) {
+      AndroidPlatformViewHostingMode androidHostingMode,
+      Map<String, dynamic> creationParams,
+      OnPlatformViewCreatedCallback onPlatformViewCreated,
+      Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers,
+      {bool withNavigation = false,
+      Key? key}) {
     if (defaultTargetPlatform == TargetPlatform.android) {
       switch (androidHostingMode) {
         case AndroidPlatformViewHostingMode.TLHC_VD:
         case AndroidPlatformViewHostingMode.TLHC_HC:
         case AndroidPlatformViewHostingMode.HC:
           return PlatformViewLink(
+            key: key,
             viewType: withNavigation
                 ? "plugins.flutter.io/mapbox_navigation_maps"
                 : 'plugins.flutter.io/mapbox_maps',
@@ -45,7 +46,7 @@ class _MapboxMapsPlatform {
               return AndroidViewSurface(
                   controller: controller as AndroidViewController,
                   hitTestBehavior: PlatformViewHitTestBehavior.opaque,
-                  gestureRecognizers: gestureRecognizers ?? Set());
+                  gestureRecognizers: gestureRecognizers ?? {});
             },
             onCreatePlatformView: (params) {
               final AndroidViewController controller =
@@ -72,6 +73,7 @@ class _MapboxMapsPlatform {
           );
         case AndroidPlatformViewHostingMode.VD:
           return AndroidView(
+            key: key,
             viewType: withNavigation
                 ? "plugins.flutter.io/mapbox_navigation_maps"
                 : 'plugins.flutter.io/mapbox_maps',
@@ -83,6 +85,7 @@ class _MapboxMapsPlatform {
       }
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       return UiKitView(
+        key: key,
         viewType: 'plugins.flutter.io/mapbox_maps',
         onPlatformViewCreated: onPlatformViewCreated,
         gestureRecognizers: gestureRecognizers,
@@ -113,6 +116,15 @@ class _MapboxMapsPlatform {
       case AndroidPlatformViewHostingMode.VD:
         throw "Unexpected hostring mode(VD) when selecting an android view controller";
     }
+  }
+
+  Future<void> submitViewSizeHint(
+      {required double width, required double height}) {
+    return _channel
+        .invokeMethod('mapView#submitViewSizeHint', <String, dynamic>{
+      'width': width,
+      'height': height,
+    });
   }
 
   void dispose() async {
