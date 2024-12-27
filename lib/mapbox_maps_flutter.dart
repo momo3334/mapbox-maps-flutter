@@ -166,66 +166,26 @@ part 'src/navigation/navigation_events_data.dart';
 
 part 'src/navigation/navigation_map.widget.dart';
 
-part 'src/navigation/navigation_events.dart';
+part 'src/viewport/viewport_internal.dart';
 
-part 'src/navigation/navigation_map_events.dart';
+part 'src/viewport/state_viewport_extension.dart';
 
-part 'src/navigation/navigation_manager.dart';
+part 'src/viewport/states/viewport_state.dart';
 
-part 'src/navigation/widget/navigation_event_provider.dart';
+part 'src/viewport/states/overview_viewport_state.dart';
 
-part 'src/navigation/widget/navigation_manager_consumer.dart';
+part 'src/viewport/states/follow_puck_viewport_state.dart';
 
-part 'src/navigation/widget/navigation_event_consumer.dart';
+part 'src/viewport/states/camera_viewport_state.dart';
 
-part 'src/navigation/widget/speed_limit_widget.dart';
+part 'src/viewport/states/style_default_viewport_state.dart';
 
-part 'src/search/PlaceAutocomplete.dart';
+part 'src/viewport/states/idle_viewport_state.dart';
 
-part 'src/search/widget/place_autocomplete_search.dart';
+part 'src/viewport/transitions/viewport_transition.dart';
 
-part 'src/search/widget/result_list_view.dart';
+part 'src/viewport/transitions/default_viewport_transition.dart';
 
-part 'src/navigation/navigation_session_status.dart';
+part 'src/viewport/transitions/fly_viewport_transition.dart';
 
-part 'src/navigation/route_progress_event.dart';
-
-part 'src/navigation/location_matcher_result.dart';
-
-part 'src/navigation/navigation_event_types.enum.dart';
-
-part 'src/navigation/navigation_events_data.dart';
-
-part 'src/navigation/navigation_map.widget.dart';
-
-part 'src/navigation/navigation_events.dart';
-
-part 'src/navigation/navigation_map_events.dart';
-
-part 'src/navigation/navigation_manager.dart';
-
-part 'src/navigation/widget/navigation_event_provider.dart';
-
-part 'src/navigation/widget/navigation_manager_consumer.dart';
-
-part 'src/navigation/widget/navigation_event_consumer.dart';
-
-part 'src/navigation/widget/speed_limit_widget.dart';
-
-part 'src/search/PlaceAutocomplete.dart';
-
-part 'src/search/widget/place_autocomplete_search.dart';
-
-part 'src/search/widget/result_list_view.dart';
-
-part 'src/navigation/navigation_session_status.dart';
-
-part 'src/navigation/route_progress_event.dart';
-
-part 'src/navigation/location_matcher_result.dart';
-
-part 'src/navigation/navigation_event_types.enum.dart';
-
-part 'src/navigation/navigation_events_data.dart';
-
-part 'src/navigation/navigation_map.widget.dart';
+part 'src/viewport/transitions/easing_viewport_transition.dart';
