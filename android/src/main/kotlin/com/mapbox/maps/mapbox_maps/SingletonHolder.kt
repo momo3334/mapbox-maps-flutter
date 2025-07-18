@@ -1,12 +1,12 @@
 package com.mapbox.maps.mapbox_maps
 
-open class SingletonHolder<out T, in A, B, C>(private val constructor: (A, B, C) -> T) {
+open class SingletonHolder<out T, in A, B>(private val constructor: (A, B) -> T) {
 
   @Volatile
   private var instance: T? = null
 
-  fun createInstance(argA: A, argB: B, argC: C): T {
-    val newInstance = constructor(argA, argB, argC)
+  fun createInstance(argA: A, argB: B): T {
+    val newInstance = constructor(argA, argB)
     instance = newInstance
     return newInstance
   }

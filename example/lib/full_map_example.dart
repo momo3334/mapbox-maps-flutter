@@ -207,7 +207,6 @@ class FullMapExampleState extends State<FullMapExample>
                       ),
                       ElevatedButton(
                         onPressed: () async {
-                          await navigationManager?.example();
                           await mapboxMap?.requestNavigationCameraToFollowing();
                         },
                         child: Text("Start Navigation"),

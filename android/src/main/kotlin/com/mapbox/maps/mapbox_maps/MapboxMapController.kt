@@ -35,26 +35,24 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
+import io.flutter.plugin.platform.PlatformViewsController
 import java.io.ByteArrayOutputStream
 
 open class MapboxMapController(
   context: Context,
   mapInitOptions: MapInitOptions,
   private val lifecycleProvider: MapboxMapsPlugin.LifecycleProvider,
-  messenger: BinaryMessenger,
+  protected val messenger: BinaryMessenger,
   channelSuffix: Long,
   pluginVersion: String,
   eventTypes: List<Long>
 ) : PlatformView,
   DefaultLifecycleObserver,
   MethodChannel.MethodCallHandler {
-
+  protected val channelSuffix: String = channelSuffix.toString()
   protected var mapView: MapView? = null
   private var mapboxMap: MapboxMap? = null
-
   private val methodChannel: MethodChannel
-  private val messenger: BinaryMessenger
-  protected val channelSuffix: String
 
   private val styleController: StyleController
   private val cameraController: CameraController
@@ -130,8 +128,6 @@ open class MapboxMapController(
   protected var lifecycleHelper: LifecycleHelper? = null
 
   init {
-    this.messenger = messenger
-    this.channelSuffix = channelSuffix.toString()
 
     val mapView = MapView(context, mapInitOptions)
     val mapboxMap = mapView.mapboxMap

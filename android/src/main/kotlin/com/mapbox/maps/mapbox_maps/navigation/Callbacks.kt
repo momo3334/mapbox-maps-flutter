@@ -5,3 +5,5 @@ import com.mapbox.navigation.base.route.NavigationRoute
 data class RouteLineChangedEvent(
   val navigationRoute: NavigationRoute?
 )
+
+class LocationPuckClickedEvent()

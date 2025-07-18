@@ -208,12 +208,12 @@ class MapboxMap extends ChangeNotifier {
           binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
           messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString());
 
-  late _NavigationManager _example = _NavigationManager(
+  late final _NavigationManager _navigationManager = _NavigationManager(
     binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
     messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString(),
   );
 
-  late _NavigationCameraManager _navigationCameraManager =
+  late final _NavigationCameraManager _navigationCameraManager =
       _NavigationCameraManager(
           binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
           messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString());
@@ -665,9 +665,8 @@ class MapboxMap extends ChangeNotifier {
   Future<void> setSnapshotLegacyMode(bool enable) =>
       _mapInterface.setSnapshotLegacyMode(enable);
 
-  void exampleCall() => _example.example();
-
-  void setRoute(GeoPoint origin, GeoPoint destination) => _example.setRoute(
+  void setRoute(GeoPoint origin, GeoPoint destination) =>
+      _navigationManager.setRoute(
         origin,
         destination,
       );
@@ -677,6 +676,33 @@ class MapboxMap extends ChangeNotifier {
 
   Future<void> requestNavigationCameraToFollowing() =>
       _navigationCameraManager.requestNavigationCameraToFollowing();
+
+  Future<NavigationCameraStates> getNavigationCameraState() =>
+      _navigationCameraManager.getNavigationCameraState();
+
+  Future<void> followingPitchPropertyOverride(double pitch) =>
+      _navigationCameraManager.followingPitchPropertyOverride(pitch);
+
+  Future<void> followingBearingPropertyOverride(double bearing) =>
+      _navigationCameraManager.followingBearingPropertyOverride(bearing);
+
+  Future<void> overviewPitchPropertyOverride(double pitch) =>
+      _navigationCameraManager.overviewPitchPropertyOverride(pitch);
+
+  Future<void> overviewBearingPropertyOverride(double bearing) =>
+      _navigationCameraManager.overviewBearingPropertyOverride(bearing);
+
+  Future<void> clearFollowingOverrides() =>
+      _navigationCameraManager.clearFollowingOverrides();
+
+  Future<void> clearOverviewOverrides() =>
+      _navigationCameraManager.clearOverviewOverrides();
+
+  Future<void> overviewZoomPropertyOverride(double zoom) =>
+      _navigationCameraManager.overviewZoomPropertyOverride(zoom);
+
+  Future<void> followingZoomPropertyOverride(double zoom) =>
+      _navigationCameraManager.followingZoomPropertyOverride(zoom);
 }
 
 class _GestureListener extends GestureListener {

@@ -11,11 +11,12 @@ class NavigationInstanceManager(
 ) : _NavigationInstanceManager {
   override fun setupNavigationManager(channelSuffix: String) {
     val navigationController =
-      NavigationController.createInstance(context, messenger, channelSuffix)
+      NavigationController.createInstance(context, messenger)
     _NavigationManager.setUp(messenger, navigationController, channelSuffix)
   }
 
   override fun tearDownNavigationManager(channelSuffix: String) {
     _NavigationManager.setUp(messenger, null, channelSuffix)
+    NavigationController.getInstanceOrNull()?.tearDown()
   }
 }

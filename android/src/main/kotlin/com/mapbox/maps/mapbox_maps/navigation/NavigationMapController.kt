@@ -24,6 +24,7 @@ import com.mapbox.maps.extension.style.expressions.dsl.generated.interpolate
 import com.mapbox.maps.extension.style.layers.properties.generated.Visibility
 import com.mapbox.maps.mapbox_maps.MapboxMapController
 import com.mapbox.maps.mapbox_maps.MapboxMapsPlugin
+import com.mapbox.maps.mapbox_maps.R.*
 import com.mapbox.maps.mapbox_maps.pigeons._NavigationCameraManager
 import com.mapbox.maps.plugin.LocationPuck2D
 import com.mapbox.maps.plugin.PuckBearing
@@ -38,7 +39,6 @@ import com.mapbox.maps.viewannotation.OnViewAnnotationUpdatedListener
 import com.mapbox.maps.viewannotation.annotatedLayerFeature
 import com.mapbox.maps.viewannotation.annotationAnchors
 import com.mapbox.maps.viewannotation.viewAnnotationOptions
-import com.mapbox.navigation.base.formatter.DistanceFormatterOptions
 import com.mapbox.navigation.core.MapboxNavigation
 import com.mapbox.navigation.core.directions.session.RoutesObserver
 import com.mapbox.navigation.core.directions.session.RoutesUpdatedResult
@@ -47,9 +47,10 @@ import com.mapbox.navigation.core.lifecycle.MapboxNavigationApp
 import com.mapbox.navigation.core.lifecycle.MapboxNavigationObserver
 import com.mapbox.navigation.core.trip.session.LocationMatcherResult
 import com.mapbox.navigation.core.trip.session.LocationObserver
+import com.mapbox.navigation.core.trip.session.NavigationSessionStateObserver
 import com.mapbox.navigation.core.trip.session.RouteProgressObserver
-import com.mapbox.navigation.ui.maps.R
 import com.mapbox.navigation.ui.maps.camera.NavigationCamera
+import com.mapbox.navigation.ui.maps.camera.data.FollowingFrameOptions
 import com.mapbox.navigation.ui.maps.camera.data.MapboxNavigationViewportDataSource
 import com.mapbox.navigation.ui.maps.camera.lifecycle.NavigationBasicGesturesHandler
 import com.mapbox.navigation.ui.maps.camera.transition.NavigationCameraTransitionOptions
@@ -74,86 +75,31 @@ class NavigationMapController(
   channelSuffix: Long,
   pluginVersion: String,
   eventTypes: List<Long>,
-) :
-  MapboxMapController(
-    context,
-    mapInitOptions,
-    lifecycleProvider,
-    messenger,
-    channelSuffix,
-    pluginVersion,
-    eventTypes,
-  ) {
+) : MapboxMapController(
+  context,
+  mapInitOptions,
+  lifecycleProvider,
+  messenger,
+  channelSuffix,
+  pluginVersion,
+  eventTypes,
+) {
   private var navigationMapEventHandler: NavigationMapEventHandler
-  private lateinit var viewportDataSource: MapboxNavigationViewportDataSource
-  private lateinit var routeLineView: MapboxRouteLineView
-  private lateinit var navigationCamera: NavigationCamera
   private var pixelDensity = context.resources.displayMetrics.density
   private val navigationLocationProvider = NavigationLocationProvider()
   private val navigationCameraController: NavigationCameraController
   private val broker: Broker = Broker()
   private var primaryEtaAnnotation: View? = null
   private var altEtaAnnotation: View? = null
-
-  private val overviewPadding: EdgeInsets by lazy {
-    EdgeInsets(40.0 * pixelDensity, 40.0 * pixelDensity, 100.0 * pixelDensity, 40.0 * pixelDensity)
-  }
-
-  private val followingPadding: EdgeInsets by lazy {
-    EdgeInsets(100.0 * pixelDensity, 40.0 * pixelDensity, 140.0 * pixelDensity, 40.0 * pixelDensity)
-  }
+  private lateinit var navigationCamera: NavigationCamera
+  private lateinit var viewportDataSource: MapboxNavigationViewportDataSource
+  private lateinit var routeLineView: MapboxRouteLineView
 
   /**
    * Generates updates for the [routeLineView] with the geometries and properties of the routes that
    * should be drawn on the map.
    */
   private lateinit var routeLineApi: MapboxRouteLineApi
-
-  // Define distance formatter options
-  private val distanceFormatterOptions: DistanceFormatterOptions by lazy {
-    DistanceFormatterOptions.Builder(context).build()
-  }
-
-  /**
-   * Gets notified with location updates.
-   *
-   * Exposes raw updates coming directly from the location services and the updates enhanced by the
-   * Navigation SDK (cleaned up and matched to the road).
-   */
-  private val locationObserver =
-    object : LocationObserver {
-      var firstLocationUpdateReceived = false
-
-      override fun onNewRawLocation(rawLocation: Location) {
-        // not handled
-      }
-
-      override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
-        val enhancedLocation = locationMatcherResult.enhancedLocation
-
-        // update location puck's position on the map
-        navigationLocationProvider.changePosition(
-          location = enhancedLocation,
-          keyPoints = locationMatcherResult.keyPoints,
-        )
-
-        // update camera position to account for new location
-        viewportDataSource.onLocationChanged(enhancedLocation)
-        viewportDataSource.evaluate()
-
-        // if this is the first location update the activity has received,
-        // it's best to immediately move the camera to the current user location
-        if (!firstLocationUpdateReceived) {
-          firstLocationUpdateReceived = true
-          navigationCamera.requestNavigationCameraToOverview(
-            stateTransitionOptions =
-            NavigationCameraTransitionOptions.Builder()
-              .maxDuration(0) // instant transition
-              .build()
-          )
-        }
-      }
-    }
 
   /**
    * Generates updates for the [routeArrowView] with the geometries and properties of maneuver
@@ -164,9 +110,70 @@ class NavigationMapController(
   /** Draws maneuver arrows on the map based on the data [routeArrowApi]. */
   private lateinit var routeArrowView: MapboxRouteArrowView
 
+
+  private val overviewPadding: EdgeInsets by lazy {
+    EdgeInsets(40.0 * pixelDensity, 40.0 * pixelDensity, 100.0 * pixelDensity, 40.0 * pixelDensity)
+  }
+
+  private val followingPadding: EdgeInsets by lazy {
+    EdgeInsets(100.0 * pixelDensity, 40.0 * pixelDensity, 140.0 * pixelDensity, 40.0 * pixelDensity)
+  }
+
+  /**
+   * Gets notified with NavigationSessionStatus updates.
+   */
+  private val navigationStatusObserver = NavigationSessionStateObserver {
+    val navigationSessionState =
+      NavigationController.getInstanceOrNull()?.getNavigationSessionState()
+    if (navigationSessionState == "FreeDrive") {
+      viewportDataSource.options.followingFrameOptions.focalPoint =
+        FollowingFrameOptions.FocalPoint(0.5, 0.5)
+    } else {
+      viewportDataSource.options.followingFrameOptions.focalPoint =
+        FollowingFrameOptions.FocalPoint(0.5, 1.0)
+    }
+  }
+
+  /**
+   * Gets notified with location updates.
+   *
+   * Exposes raw updates coming directly from the location services and the updates enhanced by the
+   * Navigation SDK (cleaned up and matched to the road).
+   */
+  private val locationObserver = object : LocationObserver {
+    var firstLocationUpdateReceived = false
+
+    override fun onNewRawLocation(rawLocation: Location) {
+    }
+
+    override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
+      val enhancedLocation = locationMatcherResult.enhancedLocation
+
+      // update location puck's position on the map
+      navigationLocationProvider.changePosition(
+        location = enhancedLocation,
+        keyPoints = locationMatcherResult.keyPoints,
+      )
+
+      // update camera position to account for new location
+      viewportDataSource.onLocationChanged(enhancedLocation)
+      viewportDataSource.evaluate()
+
+      // if this is the first location update the activity has received,
+      // it's best to immediately move the camera to the current user location
+      if (!firstLocationUpdateReceived) {
+        firstLocationUpdateReceived = true
+        navigationCamera.requestNavigationCameraToOverview(
+          stateTransitionOptions = NavigationCameraTransitionOptions.Builder()
+            .maxDuration(0) // instant transition
+            .build()
+        )
+      }
+    }
+  }
+
   private val routeProgressObserver =
-    RouteProgressObserver { routeProgress
-      -> // update the camera position to account for the progressed fragment of the route
+    RouteProgressObserver { routeProgress -> // update the camera position to account for the progressed fragment of the route
       viewportDataSource.onRouteProgressChanged(routeProgress)
       viewportDataSource.evaluate()
 
@@ -221,9 +228,9 @@ class NavigationMapController(
         )
       }
 
-      // TODO: add update annotation time when route updates
       updateAnnotations(routeUpdateResult, navigationSessionState)
       observeViewAnnotationUpdate()
+
       // update the camera position to account for the new route
       viewportDataSource.onRouteChanged(routeUpdateResult.navigationRoutes.first())
       viewportDataSource.evaluate()
@@ -249,22 +256,12 @@ class NavigationMapController(
     navigationSessionState: String?,
   ) {
 
-    if (navigationSessionState == "ActiveGuidance") {
-      primaryEtaAnnotation?.let { mapView?.viewAnnotationManager?.removeViewAnnotation(it) }
-      altEtaAnnotation?.let { mapView?.viewAnnotationManager?.removeViewAnnotation(it) }
-      primaryEtaAnnotation = null
-      altEtaAnnotation = null
-      return
-    }
-
     // primaryRoute
-    if (primaryEtaAnnotation == null) {
-      mapView
-        ?.viewAnnotationManager
-        ?.addViewAnnotation(
-          resId = com.mapbox.maps.mapbox_maps.R.layout.item_dva_eta,
-          options =
-          viewAnnotationOptions {
+    if (navigationSessionState != "ActiveGuidance") {
+      if (primaryEtaAnnotation == null) {
+        mapView?.viewAnnotationManager?.addViewAnnotation(
+          resId = layout.item_dva_eta,
+          options = viewAnnotationOptions {
             annotatedLayerFeature("mapbox-layerGroup-1-main")
             annotationAnchors(
               { anchor(ViewAnnotationAnchor.TOP_RIGHT) },
@@ -276,24 +273,36 @@ class NavigationMapController(
           asyncInflater = AsyncLayoutInflater(context),
           asyncInflateCallback = { annotationView: View ->
             primaryEtaAnnotation = annotationView
-            val findViewById =
-              annotationView.findViewById<TextView>(com.mapbox.maps.mapbox_maps.R.id.textNativeView)
+            val textView = annotationView.findViewById<TextView>(id.textNativeView)
 
             // TODO: add time text formatting
-            findViewById.text =
-              "${(routeUpdateResult.navigationRoutes.first().directionsRoute.duration() / 60).roundToInt()} min"
+            textView.text = routeAnnotationTimeForNavigationState(
+              routeUpdateResult,
+              navigationSessionState,
+              isAlternative = false,
+            )
           },
         )
+      } else {
+        val textView = primaryEtaAnnotation!!.findViewById<TextView>(id.textNativeView)
+        textView.text = routeAnnotationTimeForNavigationState(
+          routeUpdateResult,
+          navigationSessionState,
+          isAlternative = false,
+        )
+      }
+    } else if (primaryEtaAnnotation != null) {
+      primaryEtaAnnotation?.let { mapView?.viewAnnotationManager?.removeViewAnnotation(it) }
+      primaryEtaAnnotation = null
     }
 
+
     // alternativeRoute
-    if (altEtaAnnotation == null && routeUpdateResult.navigationRoutes.size > 1) {
-      mapView
-        ?.viewAnnotationManager
-        ?.addViewAnnotation(
-          resId = com.mapbox.maps.mapbox_maps.R.layout.item_dva_eta,
-          options =
-          viewAnnotationOptions {
+    if (routeUpdateResult.navigationRoutes.size > 1) {
+      if (altEtaAnnotation == null) {
+        mapView?.viewAnnotationManager?.addViewAnnotation(
+          resId = layout.item_dva_eta,
+          options = viewAnnotationOptions {
             annotatedLayerFeature("mapbox-layerGroup-2-main")
             annotationAnchors(
               { anchor(ViewAnnotationAnchor.TOP_RIGHT) },
@@ -305,51 +314,79 @@ class NavigationMapController(
           asyncInflater = AsyncLayoutInflater(context),
           asyncInflateCallback = { annotationView: View ->
             altEtaAnnotation = annotationView
-            val findViewById =
-              annotationView.findViewById<TextView>(com.mapbox.maps.mapbox_maps.R.id.textNativeView)
+            val textView = annotationView.findViewById<TextView>(id.textNativeView)
 
             // TODO: add time text formatting
-            findViewById.text =
-              "${(routeUpdateResult.navigationRoutes[1].directionsRoute.duration() / 60).roundToInt()} min"
+            textView.text = routeAnnotationTimeForNavigationState(
+              routeUpdateResult, navigationSessionState, isAlternative = true
+            )
           },
         )
+      } else {
+        val textView = altEtaAnnotation?.findViewById<TextView>(id.textNativeView)
+
+        textView?.text = routeAnnotationTimeForNavigationState(
+          routeUpdateResult, navigationSessionState, isAlternative = true
+        )
+      }
+    } else {
+      altEtaAnnotation?.let { mapView?.viewAnnotationManager?.removeViewAnnotation(it) }
+      altEtaAnnotation = null
     }
   }
 
+  private fun routeAnnotationTimeForNavigationState(
+    routeUpdateResult: RoutesUpdatedResult,
+    navigationState: String?,
+    isAlternative: Boolean,
+  ): String {
+    if (navigationState == "overview") {
+      val navigationRoute =
+        if (isAlternative) routeUpdateResult.navigationRoutes[1] else routeUpdateResult.navigationRoutes.first()
+      return "${(navigationRoute.directionsRoute.duration() / 60).roundToInt()} min"
+    } else if (navigationState == "ActiveGuidance") {
+      if (isAlternative) {
+        val durationDifference =
+          ((routeUpdateResult.navigationRoutes.first().directionsRoute.duration() - routeUpdateResult.navigationRoutes[1].directionsRoute.duration()) / 60.0).roundToInt()
+        return if (durationDifference >= 0) {
+          "+${durationDifference} min"
+        } else {
+          "$durationDifference min"
+        }
+      }
+    }
+    return ""
+  }
+
   private fun observeViewAnnotationUpdate() {
-    mapView
-      ?.viewAnnotationManager
-      ?.addOnViewAnnotationUpdatedListener(
-        object : OnViewAnnotationUpdatedListener {
-          override fun onViewAnnotationAnchorUpdated(
-            view: View,
-            anchor: ViewAnnotationAnchorConfig,
-          ) {
-            // set different background according to the anchor
-            when (view) {
-              primaryEtaAnnotation -> {
-                view.background =
-                  getBackground(
-                    anchor,
-                    getColor(context, com.mapbox.navigation.ui.components.R.color.colorOnPrimary),
-                  )
-              }
+    mapView?.viewAnnotationManager?.addOnViewAnnotationUpdatedListener(object :
+      OnViewAnnotationUpdatedListener {
+      override fun onViewAnnotationAnchorUpdated(
+        view: View,
+        anchor: ViewAnnotationAnchorConfig,
+      ) {
+        // set different background according to the anchor
+        when (view) {
+          primaryEtaAnnotation -> {
+            view.background = getBackground(
+              anchor,
+              getColor(context, color.colorOnPrimary),
+            )
+          }
 
-              altEtaAnnotation -> {
-                view.background =
-                  getBackground(
-                    anchor,
-                    getColor(context, com.mapbox.navigation.ui.components.R.color.colorOnPrimary),
-                  )
-              }
+          altEtaAnnotation -> {
+            view.background = getBackground(
+              anchor,
+              getColor(context, color.colorOnPrimary),
+            )
+          }
 
-              else -> {
-                // no-op
-              }
-            }
+          else -> {
+            // no-op
           }
         }
-      )
+      }
+    })
   }
 
   private fun getBackground(
@@ -381,7 +418,7 @@ class NavigationMapController(
     return BitmapDrawable(
       context.resources,
       drawableToBitmap(
-        getDrawable(context, com.mapbox.maps.mapbox_maps.R.drawable.bg_dva_eta)!!,
+        getDrawable(context, drawable.bg_dva_eta)!!,
         flipX = flipX,
         flipY = flipY,
         tint = tint,
@@ -401,12 +438,11 @@ class NavigationMapController(
       // copying drawable object to not manipulate on the same reference
       val constantState = sourceDrawable.constantState!!
       val drawable = constantState.newDrawable().mutate()
-      val bitmap =
-        Bitmap.createBitmap(
-          drawable.intrinsicWidth,
-          drawable.intrinsicHeight,
-          Bitmap.Config.ARGB_8888,
-        )
+      val bitmap = Bitmap.createBitmap(
+        drawable.intrinsicWidth,
+        drawable.intrinsicHeight,
+        Bitmap.Config.ARGB_8888,
+      )
       tint?.let(drawable::setTint)
       val canvas = Canvas(bitmap)
       drawable.setBounds(0, 0, canvas.width, canvas.height)
@@ -421,14 +457,15 @@ class NavigationMapController(
     }
   }
 
-  private var mapboxNavigationObserver =
-    object : MapboxNavigationObserver {
-      override fun onAttached(mapboxNavigation: MapboxNavigation) {
-        registerCallbacks()
-      }
-
-      override fun onDetached(mapboxNavigation: MapboxNavigation) {}
+  private var mapboxNavigationObserver = object : MapboxNavigationObserver {
+    override fun onAttached(mapboxNavigation: MapboxNavigation) {
+      registerCallbacks()
     }
+
+    override fun onDetached(mapboxNavigation: MapboxNavigation) {
+      unregisterCallbacks()
+    }
+  }
 
   private val onPositionChangedListener = OnIndicatorPositionChangedListener { point ->
     val result = routeLineApi.updateTraveledRouteLine(point)
@@ -437,20 +474,22 @@ class NavigationMapController(
     }
   }
 
-  private val mapClickListener = OnMapClickListener {
+  private val mapClickListener = OnMapClickListener { point ->
     mapView?.mapboxMap?.style?.apply {
-      if (
-        routeLineView.getPrimaryRouteVisibility(this) == Visibility.VISIBLE &&
-        routeLineView.getAlternativeRoutesVisibility(this) == Visibility.VISIBLE
+      if (routeLineView.getPrimaryRouteVisibility(this) == Visibility.VISIBLE && routeLineView.getAlternativeRoutesVisibility(
+          this
+        ) == Visibility.VISIBLE
       ) {
-        routeLineApi.findClosestRoute(it, mapView!!.mapboxMap, 30f) {
-          if (it.isValue) {
+        routeLineApi.findClosestRoute(point, mapView!!.mapboxMap, 30f) { closestRoute ->
+          if (closestRoute.isValue) {
             val primaryRoute = routeLineApi.getPrimaryNavigationRoute()
-            if (it.value!!.navigationRoute != routeLineApi.getPrimaryNavigationRoute()) {
+            if (closestRoute.value!!.navigationRoute != routeLineApi.getPrimaryNavigationRoute()) {
               val newNavigationRoutes =
                 MapboxNavigationApp.current()?.getNavigationRoutes()?.toMutableList()
-              newNavigationRoutes?.set(it.value!!.navigationRoute.routeIndex, primaryRoute!!)
-              newNavigationRoutes?.set(0, it.value!!.navigationRoute)
+              newNavigationRoutes?.set(
+                closestRoute.value!!.navigationRoute.routeIndex, primaryRoute!!
+              )
+              newNavigationRoutes?.set(0, closestRoute.value!!.navigationRoute)
               routeLineApi.setNavigationRoutes(newNavigationRoutes!!) { routeSet ->
                 if (routeSet.isValue) {
                   mapView?.mapboxMap?.style?.apply {
@@ -458,105 +497,106 @@ class NavigationMapController(
                     MapboxNavigationApp.current()?.flowNavigationSessionState()
                   }
                 }
-                broker.publish(RouteLineChangedEvent(navigationRoute = it.value!!.navigationRoute))
+                broker.publish(RouteLineChangedEvent(navigationRoute = closestRoute.value!!.navigationRoute))
               }
             }
           }
         }
       }
     }
+    mapView?.location?.isLocatedAt(point) { isPuckLocatedAtPoint ->
+      if (isPuckLocatedAtPoint) {
+        broker.publish(LocationPuckClickedEvent())
+      }
+    }
     return@OnMapClickListener false
   }
 
   init {
-    // initialize route line, the withRouteLineBelowLayerId is specified to place
-    // the route line below road labels layer on the map
-    // the value of this option will depend on the style that you are using
-    // and under which layer the route line should be placed on the map layers stack
+    // Initialize RouteLineApi
     val mapboxRouteLineApiOptions =
       MapboxRouteLineApiOptions.Builder().vanishingRouteLineEnabled(true)
         .styleInactiveRouteLegsIndependently(true).build()
     routeLineApi = MapboxRouteLineApi(mapboxRouteLineApiOptions)
+
+    // Initialize route line, the withRouteLineBelowLayerId is specified to place
+    // the route line below road labels layer on the map
     val mapboxRouteLineViewOptions =
-      MapboxRouteLineViewOptions.Builder(context)
-        .routeLineBelowLayerId("road-label-navigation")
+      MapboxRouteLineViewOptions.Builder(context).routeLineBelowLayerId("road-label-navigation")
         .routeLineColorResources(
-          RouteLineColorResources.Builder()
-            .routeLineTraveledColor(Color.GRAY)
-            .alternativeRouteDefaultColor(Color.GREEN)
-            .alternativeRouteClosureColor(Color.MAGENTA)
+          RouteLineColorResources.Builder().routeLineTraveledColor(Color.GRAY)
+            .alternativeRouteDefaultColor(Color.GREEN).alternativeRouteClosureColor(Color.MAGENTA)
             .alternativeRouteUnknownCongestionColor(Color.parseColor("#BCCEFB"))
             .alternativeRouteModerateCongestionColor(Color.parseColor("#BCCEFB"))
             .alternativeRouteLowCongestionColor(Color.parseColor("#BCCEFB"))
             .alternativeRouteHeavyCongestionColor(Color.parseColor("#BCCEFB"))
             .alternativeRouteSevereCongestionColor(Color.parseColor("#BCCEFB"))
-            .alternativeRouteCasingColor(Color.parseColor("#6A83D7"))
-            .build()
-        )
-        .displaySoftGradientForTraffic(true)
-        .build()
-
+            .alternativeRouteCasingColor(Color.parseColor("#6A83D7")).build()
+        ).displaySoftGradientForTraffic(true).build()
     routeLineView = MapboxRouteLineView(mapboxRouteLineViewOptions)
 
-    // initialize Navigation Camera
+    // Initialize viewportDataSource
     viewportDataSource = MapboxNavigationViewportDataSource(mapView!!.mapboxMap)
-    navigationCamera = NavigationCamera(mapView!!.mapboxMap, mapView!!.camera, viewportDataSource)
-
-    navigationCameraController = NavigationCameraController(navigationCamera, context)
-    _NavigationCameraManager.setUp(messenger, navigationCameraController, this.channelSuffix)
-
     viewportDataSource.overviewPadding = overviewPadding
     viewportDataSource.followingPadding = followingPadding
-    viewportDataSource.followingPadding = followingPadding
 
-    mapView!!.location.puckBearing = PuckBearing.HEADING
+    // Initialize Navigation Camera
+    navigationCamera = NavigationCamera(mapView!!.mapboxMap, mapView!!.camera, viewportDataSource)
+    navigationCameraController =
+      NavigationCameraController(navigationCamera, viewportDataSource, context)
+    _NavigationCameraManager.setUp(messenger, navigationCameraController, this.channelSuffix)
 
-    // initialize maneuver arrow view to draw arrows on the map
-    val routeArrowOptions =
-      RouteArrowOptions.Builder(context)
-        .withSlotName(RouteLayerConstants.TOP_LEVEL_ROUTE_LINE_LAYER_ID)
-        .build()
+    // Initialize NavigationMapEventHandler
+    navigationMapEventHandler =
+      NavigationMapEventHandler(this.broker, messenger, eventTypes, this.channelSuffix)
+
+    // Initialize maneuver arrow view to draw arrows on the map
+    val routeArrowOptions = RouteArrowOptions.Builder(context)
+      .withSlotName(RouteLayerConstants.TOP_LEVEL_ROUTE_LINE_LAYER_ID).build()
     routeArrowView = MapboxRouteArrowView(routeArrowOptions)
 
-    // TODO Implement correct teardown logic to unregister this observer.
+    // Register NavigationSDK observer
     MapboxNavigationApp.registerObserver(mapboxNavigationObserver)
 
-    mapView!!
-      .camera
-      .addCameraAnimationsLifecycleListener(NavigationBasicGesturesHandler(navigationCamera))
+    // Setup Gestures
+    mapView!!.mapboxMap.addOnMapClickListener(mapClickListener)
+    mapView!!.camera.addCameraAnimationsLifecycleListener(
+      NavigationBasicGesturesHandler(navigationCamera)
+    )
+
+    // Initialize Location Puck
     mapView!!.location.addOnIndicatorPositionChangedListener(onPositionChangedListener)
     mapView!!.location.apply {
       setLocationProvider(navigationLocationProvider)
-      this.locationPuck =
-        LocationPuck2D(
-          bearingImage = ImageHolder.Companion.from(R.drawable.mapbox_navigation_puck_icon),
-          scaleExpression =
-          interpolate {
-            linear()
-            zoom()
-            stop {
-              literal(0)
-              literal(0.3)
-            }
-            stop {
-              literal(20.0)
-              literal(1.0)
-            }
+      this.locationPuck = LocationPuck2D(
+        bearingImage = ImageHolder.from(com.mapbox.navigation.ui.components.R.drawable.mapbox_navigation_puck_icon),
+        scaleExpression = interpolate {
+          linear()
+          zoom()
+          stop {
+            literal(0)
+            literal(0.3)
           }
-            .toJson(),
-        )
+          stop {
+            literal(20.0)
+            literal(1.0)
+          }
+        }.toJson(),
+      )
       puckBearing = PuckBearing.HEADING
       puckBearingEnabled = true
       enabled = true
     }
 
-    mapView!!.mapboxMap.addOnMapClickListener(mapClickListener)
-
-    navigationMapEventHandler =
-      NavigationMapEventHandler(this.broker, messenger, eventTypes, this.channelSuffix)
-
+    // Remove unused mapbox ui components
     mapView!!.scalebar.enabled = false
     mapView!!.compass.enabled = false
+  }
+
+  override fun dispose() {
+    _NavigationCameraManager.setUp(messenger, null, this.channelSuffix)
+    MapboxNavigationApp.unregisterObserver(mapboxNavigationObserver)
+    super.dispose()
   }
 
   override fun onFlutterViewAttached(flutterView: View) {
@@ -564,12 +604,23 @@ class NavigationMapController(
     MapboxNavigationApp.attach(lifecycleHelper!!)
   }
 
+
   @SuppressLint("MissingPermission")
   private fun registerCallbacks() {
     val mapboxNavigation = MapboxNavigationApp.current()!!
     mapboxNavigation.registerRoutesObserver(routesObserver)
     mapboxNavigation.registerLocationObserver(locationObserver)
     mapboxNavigation.registerRouteProgressObserver(routeProgressObserver)
+    mapboxNavigation.registerNavigationSessionStateObserver(navigationStatusObserver)
     mapboxNavigation.startTripSession()
+  }
+
+  @SuppressLint("MissingPermission")
+  private fun unregisterCallbacks() {
+    val mapboxNavigation = MapboxNavigationApp.current()!!
+    mapboxNavigation.unregisterRoutesObserver(routesObserver)
+    mapboxNavigation.unregisterLocationObserver(locationObserver)
+    mapboxNavigation.unregisterRouteProgressObserver(routeProgressObserver)
+    mapboxNavigation.unregisterNavigationSessionStateObserver(navigationStatusObserver)
   }
 }

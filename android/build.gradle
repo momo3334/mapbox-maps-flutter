@@ -7,7 +7,7 @@ buildscript {
         agp_version1 = '8.3.0'
         agp_version = '7.4.2'
     }
-    ext.kotlin_version = '1.8.22'
+    ext.kotlin_version = '2.1.10'
     repositories {
         google()
         mavenCentral()
@@ -93,12 +93,13 @@ dependencies {
     implementation "com.mapbox.navigationcore:tripdata:3.5.1"
     implementation "com.mapbox.navigationcore:copilot:3.5.1"
     implementation "com.mapbox.search:place-autocomplete:2.6.1"
+    implementation "com.mapbox.search:mapbox-search-android:2.6.1"
 
     implementation "com.github.adrielcafe.broker:broker-core:1.1.2"
 
 
     implementation "androidx.annotation:annotation:1.9.1"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.7"
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation 'androidx.asynclayoutinflater:asynclayoutinflater:1.0.0'
 }

@@ -27,10 +27,12 @@ class NavigationMap extends StatefulWidget {
     this.onStyleImageUnusedListener,
     this.onResourceRequestListener,
     this.onRouteLineChangedListener,
+    this.onLocationPuckClickedListener,
     this.onTapListener,
     this.onLongTapListener,
     this.onScrollListener,
     this.withNavigation = false,
+    this.viewport,
   });
 
   /// Describes the map options value when using a MapWidget.
@@ -107,6 +109,9 @@ class NavigationMap extends StatefulWidget {
   /// Invoked when the selected routeLine changes (eg: user taps on alternative route line).
   final OnRouteLineChangedListener? onRouteLineChangedListener;
 
+  /// Invoked when the user clicks on the LocationPuck inside the map widget.
+  final OnLocationPuckClickedListener? onLocationPuckClickedListener;
+
   /// Which gestures should be consumed by the map.
   ///
   /// It is possible for other gesture recognizers to be competing with the map on pointer
@@ -125,6 +130,7 @@ class NavigationMap extends StatefulWidget {
   final OnMapTapListener? onTapListener;
   final OnMapLongTapListener? onLongTapListener;
   final OnMapScrollListener? onScrollListener;
+  final ViewportState? viewport;
 
   @override
   State<NavigationMap> createState() => _navigationMapWidgetState;
@@ -137,7 +143,7 @@ class _NavigationMapState extends State<NavigationMap> {
   late final _NavigationMapEvents _events;
   final _suffix = _suffixesRegistry.getSuffix();
   late final _MapboxMapsPlatform _mapboxMapsPlatform =
-  _MapboxMapsPlatform.instance(_suffix);
+      _MapboxMapsPlatform.instance(_suffix);
 
   @override
   void initState() {
@@ -156,9 +162,9 @@ class _NavigationMapState extends State<NavigationMap> {
       cameraOptions: CameraOptions(
           center: Point(
               coordinates: Position(
-                6.0033416748046875,
-                43.70908256335716,
-              )),
+            6.0033416748046875,
+            43.70908256335716,
+          )),
           zoom: 3.0),
       styleUri: widget.styleUri,
       textureView: true,
@@ -180,6 +186,7 @@ class _NavigationMapState extends State<NavigationMap> {
       onLongTapListener: widget.onLongTapListener,
       withNavigation: true,
       onMapboxControllerCreated: _onMapboxControllerCreated,
+      viewport: widget.viewport,
       suffix: _suffix,
     );
   }
@@ -191,6 +198,8 @@ class _NavigationMapState extends State<NavigationMap> {
 
   void _updateEventListeners() {
     _events._onRouteLineChangedListener = widget.onRouteLineChangedListener;
+    _events._onLocationPuckClickedListener =
+        widget.onLocationPuckClickedListener;
   }
 
   @override

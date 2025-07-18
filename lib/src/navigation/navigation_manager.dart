@@ -3,6 +3,12 @@ part of mapbox_maps_flutter;
 final _NavigationInstanceManager _navigationInstanceManager =
     _NavigationInstanceManager();
 
+class NavMan {
+  final NavigationManager nav;
+
+  NavMan({required this.nav});
+}
+
 class NavigationManager {
   final int _suffix = _suffixesRegistry.getSuffix();
 
@@ -22,6 +28,7 @@ class NavigationManager {
       _navigationInstanceManager
           .tearDownNavigationManager("navigation-manager/${suffix.toString()}");
       _suffixesRegistry.releaseSuffix(suffix);
+      print("FINALIZING NAVIGATION MANAGER");
     } catch (e) {}
   });
 
@@ -107,15 +114,6 @@ class NavigationManager {
         return transformedNavigationSessionState;
       },
     );
-  }
-
-  Future<void> example() async {
-    await _api.example();
-  }
-
-  Future<String> getHostLanguage() {
-    // TODO: implement getHostLanguage
-    throw UnimplementedError();
   }
 
   Future<void> setRoute(GeoPoint origin, GeoPoint destination) async {

@@ -57,7 +57,10 @@ class BannerInstruction extends StatelessWidget {
                       // TODO: Convert to font for better vertical baseline alignment (only works with icon fonts).
                       Padding(
                         padding: const EdgeInsets.only(
-                          bottom: 8.0, left: 16, right: 16,),
+                          bottom: 8.0,
+                          left: 16,
+                          right: 16,
+                        ),
                         child: getTurnIcon(
                             type: value.routeProgress?.bannerInstructions
                                 ?.primary?.type,
@@ -72,8 +75,7 @@ class BannerInstruction extends StatelessWidget {
                                 ?.currentStepProgress?.distanceRemaining,
                           ),
                           textAlign: TextAlign.left,
-                          style: Theme
-                              .of(context)
+                          style: Theme.of(context)
                               .textTheme
                               .headlineSmall
                               ?.copyWith(fontWeight: FontWeight.w500),
@@ -87,14 +89,10 @@ class BannerInstruction extends StatelessWidget {
                       value.routeProgress?.bannerInstructions?.primary?.text ??
                           "",
                       textAlign: TextAlign.center,
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(
-                        fontWeight: FontWeight.w400,
-                        fontSize: 20,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
+                          ),
                     ),
                   ),
                 ],
@@ -113,14 +111,13 @@ class BannerInstruction extends StatelessWidget {
 
     if (distance < 300) {
       return "${(distance / 10.0).round() * 10}m";
-    } else if (distance < 1000) {
+    } else if (distance.round() < 1000) {
       return "${(distance / 50.0).round() * 50}m";
     } else if (distance < 10000) {
       final mod = pow(10.0, 1);
       final roundedDistance =
-      (((distance / 1000) * mod).round().toDouble() / mod);
-      return "${(roundedDistance).toStringAsFixed(
-          (roundedDistance).roundToDouble() == roundedDistance ? 0 : 1)}km";
+          (((distance / 1000) * mod).round().toDouble() / mod);
+      return "${(roundedDistance).toStringAsFixed((roundedDistance).roundToDouble() == roundedDistance ? 0 : 1)}km";
     } else {
       return "${(distance / 1000).round()}km";
     }
@@ -158,8 +155,7 @@ class BannerInstruction extends StatelessWidget {
         assetName = "mapbox_ic_uturn.svg";
       } else {
         assetName =
-        "mapbox_ic_${type!.replaceAll(" ", "_")}_${modifier!.replaceAll(
-            " ", "_")}.svg";
+            "mapbox_ic_${type!.replaceAll(" ", "_")}_${modifier!.replaceAll(" ", "_")}.svg";
       }
     }
     return SvgPicture.asset("lib/assets/icons/navigation/svg/$assetName",

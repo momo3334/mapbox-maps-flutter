@@ -31,15 +31,26 @@ class PlaceAutocompleteController(
       if (suggestions.isValue) {
         currentSuggestions = suggestions.value
         val transformedSuggestions = requireNotNull(suggestions.value).map {
-          return@map PlaceAutoCompleteSuggestion(
-            name = it.name,
-            formattedAddress = it.formattedAddress,
-            coordinate = it.coordinate?.let { coordinate ->
+          val coordinates: GeoPoint?;
+          if (it.routablePoints != null && it.routablePoints?.isNotEmpty() == true) {
+            val routablePoint = it.routablePoints!![0]
+            coordinates = GeoPoint(
+              type = routablePoint.point.type(),
+              coordinates = routablePoint.point.coordinates()
+            )
+          } else {
+            coordinates = it.coordinate?.let { coordinate ->
               GeoPoint(
                 type = coordinate.type(),
                 coordinates = coordinate.coordinates()
               )
-            },
+            }
+          }
+
+          return@map PlaceAutoCompleteSuggestion(
+            name = it.name,
+            formattedAddress = it.formattedAddress,
+            coordinate = coordinates,
             routablePoints = null,
             makiIcon = it.makiIcon,
             distanceMeters = it.distanceMeters,

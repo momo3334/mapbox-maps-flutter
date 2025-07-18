@@ -4,7 +4,7 @@ import 'package:pigeon/pigeon.dart';
   dartOut: 'lib/src/pigeons/messages.g.dart',
   dartOptions: DartOptions(),
   kotlinOut:
-      'android/src/main/kotlin/com/mapbox/maps/mapbox_maps/pigeons/Messages.g.kt',
+  'android/src/main/kotlin/com/mapbox/maps/mapbox_maps/pigeons/Messages.g.kt',
   kotlinOptions: KotlinOptions(package: "com.mapbox.maps.mapbox_maps.pigeons"),
   swiftOut: 'ios/Classes/Generated/Messages.g.swift',
   swiftOptions: SwiftOptions(),
@@ -72,8 +72,7 @@ class PlaceAutoCompleteSuggestion {
   ///Poi categories. Always empty for non-POI suggestions.
   final List<String>? categories;
 
-  PlaceAutoCompleteSuggestion(
-      this.name,
+  PlaceAutoCompleteSuggestion(this.name,
       this.formattedAddress,
       this.coordinate,
       this.routablePoints,
@@ -171,20 +170,21 @@ class PlaceAutocompleteResult {
 
 enum _NavigationEventTypes {
   routeLineChanged,
+  locationPuckClicked,
+}
+
+enum NavigationCameraStates {
+  idle,
+  transitionToFollowing,
+  following,
+  transitionToOverview,
+  overview
 }
 
 @HostApi()
 abstract class _NavigationManager {
-  String getHostLanguage();
-
-  // These annotations create more idiomatic naming of methods in Objc and Swift.
-  @SwiftFunction('example()')
-  void example();
-
-  // These annotations create more idiomatic naming of methods in Objc and Swift.
   void setRoute(GeoPoint origin, GeoPoint destination);
 
-  // These annotations create more idiomatic naming of methods in Objc and Swift.
   void setRouteById(String routeId);
 
   void cancelRoute();
@@ -206,6 +206,24 @@ abstract class _NavigationCameraManager {
   void requestNavigationCameraToOverview();
 
   void requestNavigationCameraToFollowing();
+
+  NavigationCameraStates getNavigationCameraState();
+
+  void followingPitchPropertyOverride(double pitch);
+
+  void followingBearingPropertyOverride(double bearing);
+
+  void overviewPitchPropertyOverride(double pitch);
+
+  void overviewBearingPropertyOverride(double bearing);
+
+  void overviewZoomPropertyOverride(double zoom);
+
+  void followingZoomPropertyOverride(double zoom);
+
+  void clearFollowingOverrides();
+
+  void clearOverviewOverrides();
 }
 
 @HostApi()

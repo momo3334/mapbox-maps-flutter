@@ -75,6 +75,14 @@ class NavigationMapEventHandler(
       ) {
         channel.invokeMethod(event.methodName, gson.toJson(it))
       }
+
+      _NavigationEventTypes.LOCATION_PUCK_CLICKED -> eventProvider.subscribe(
+        this,
+        LocationPuckClickedEvent::class,
+        scope = scope,
+      ) {
+        channel.invokeMethod(event.methodName, null)
+      }
     }
   }
 }

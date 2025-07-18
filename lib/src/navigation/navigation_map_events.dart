@@ -3,8 +3,11 @@ part of mapbox_maps_flutter;
 typedef void OnRouteLineChangedListener(
     RouteChangedEventData routeChangedEventData);
 
+typedef void OnLocationPuckClickedListener();
+
 final class _NavigationMapEvents {
   OnRouteLineChangedListener? _onRouteLineChangedListener;
+  OnLocationPuckClickedListener? _onLocationPuckClickedListener;
 
   BinaryMessenger? binaryMessenger;
   late final MethodChannel _channel;
@@ -13,6 +16,7 @@ final class _NavigationMapEvents {
   List<_NavigationEventTypes> get eventTypes {
     final listenersMap = {
       _onRouteLineChangedListener: _NavigationEventTypes.routeLineChanged,
+      _onLocationPuckClickedListener: _NavigationEventTypes.locationPuckClicked,
     };
     listenersMap.remove(null);
 
@@ -50,6 +54,9 @@ final class _NavigationMapEvents {
       case _NavigationEventTypes.routeLineChanged:
         _onRouteLineChangedListener
             ?.call(RouteChangedEventData.fromJson(jsonDecode(call.arguments)));
+        break;
+      case _NavigationEventTypes.locationPuckClicked:
+        _onLocationPuckClickedListener?.call();
         break;
     }
   }
